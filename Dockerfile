@@ -6,6 +6,8 @@ WORKDIR /home/node/app
 
 COPY package*.json ./
 
+RUN apk update && apk add curl
+
 USER node
 
 RUN npm ci
@@ -15,7 +17,5 @@ COPY --chown=node:node . .
 RUN npx tsc
 
 EXPOSE 3001
-
-RUN apk update && apk add curl
 
 CMD ["node", "dist/index.js"]
