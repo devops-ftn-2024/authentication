@@ -99,7 +99,7 @@ app.patch('/auth/update/password',async (req: Request, res: Response) => {
   }
 });
 
-app.get('auth/health', (req: Request, res: Response) => {
+app.get('/auth/health', (req: Request, res: Response) => {
     return res.status(200).json({message: "Hello, World!"});
 })
 
