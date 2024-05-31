@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    image: accommodatio-auth:latest
+    depends_on:
+      - mongo
+    environment:
+      PORT: 3001
+      MONGO_URI: mongodb://localhost:27017
+      MONGO_DB_NAME: auth
+      MONGO_COLLECTION_NAME: users
+      SECRET_KEY: secretkey
+      SALT_ROUNDS: 9
+    ports:
+      - "3001:3001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/auth/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user
+      MONGO_INITDB_ROOT_PASSWORD: pass
+    ports:
+      - "27017:27017"
+
+networks:
+  app-network:
+    driver: bridge
