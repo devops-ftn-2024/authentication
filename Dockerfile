@@ -16,6 +16,6 @@ RUN npx tsc
 
 EXPOSE 3001
 
-RUN apk add curl
+RUN apk update && apk add curl
 
 CMD ["node", "dist/index.js"]
