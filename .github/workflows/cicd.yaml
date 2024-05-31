@@ -11,12 +11,11 @@ on:
       - main
 
 env:
-  IMAGE_NAME: accommodatio-something
+  IMAGE_NAME: accommodatio-auth
 
 jobs:
   build:
     name: Build Docker image
-    if: false
     runs-on: ubuntu-latest
 
     steps:
@@ -61,7 +60,7 @@ jobs:
       run: docker load -i /tmp/image.tar
 
     - name: Run unit tests
-      run: docker run $IMAGE_NAME:latest echo 'Not implemented yet.'
+      run: docker run $IMAGE_NAME:latest npm run test
 
   integration-tests:
     name: Run integration tests
