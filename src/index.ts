@@ -6,9 +6,17 @@ import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { User } from './types/user';
 import { AuthService } from './service/auth-service';
 import { CustomError } from './types/errors';
+import cors, { CorsOptions } from 'cors';
 require('dotenv').config();
 
+const corsOptions: CorsOptions = {
+  origin: JSON.parse(process.env.ALLOWED_ORIGIN!),
+  optionsSuccessStatus: 200,
+};
+
 const app = express();
+app.use(cors(corsOptions));
+
 const PORT = process.env.PORT;
 
 app.use(bodyParser.json());
