@@ -10,7 +10,7 @@ import cors, { CorsOptions } from 'cors';
 require('dotenv').config();
 
 const corsOptions: CorsOptions = {
-  origin: JSON.parse(process.env.ALLOWED_ORIGIN!),
+  origin: (process.env.ALLOWED_ORIGIN!).split(','),
   optionsSuccessStatus: 200,
 };
 

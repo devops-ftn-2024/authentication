@@ -12,7 +12,7 @@ services:
       MONGO_COLLECTION_NAME: users
       SECRET_KEY: secretkey
       SALT_ROUNDS: 9
-      ALLOWED_ORIGIN: ["http://localhost:3000", "http://localhost:4200"]
+      ALLOWED_ORIGIN: http://localhost:3000,http://localhost:4200
     ports:
       - "3001:3001"
     healthcheck:
