@@ -20,6 +20,7 @@
   "homepage": "https://github.com/devops-ftn/authentication#readme",
   "dependencies": {
     "@types/http-proxy-middleware": "^1.0.0",
+    "amqplib": "^0.10.4",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -32,6 +33,7 @@
     "passport-local": "^1.0.0"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.5",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
