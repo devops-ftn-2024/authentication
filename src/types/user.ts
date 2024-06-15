@@ -6,8 +6,8 @@ export interface User {
 }
 
 export enum Role {
-    HOST,
-    GUEST
+    HOST = 'Host',
+    GUEST = 'Guest',
 }
 
 export interface UserPayload {

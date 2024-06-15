@@ -4,11 +4,14 @@ import { User, UserPayload } from "../types/user";
 import { validateUserPayload } from "../util/validation";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { EventQueue } from "../gateway/event-queue";
 
 export class AuthService {
     private authRepository;
+    private eventQueue;
     constructor() { 
         this.authRepository = new AuthRepository();
+        this.eventQueue = new EventQueue();
     }
 
     async login(username: string, password: string): Promise<string> {
@@ -24,7 +27,9 @@ export class AuthService {
 
     async validateToken(token: string): Promise<Partial<User> | null> {
         try {
+            console.log(`Validating token...`)
             const decoded = jwt.verify(token, process.env.SECRET_KEY!) as { username: string };
+            console.log(`Decoded token: ${JSON.stringify(decoded)}`)
             const user = await this.authRepository.getUser(decoded.username);
             if (user) {
                 return {username: user.username, role: user.role};
@@ -58,7 +63,18 @@ export class AuthService {
 
         
         await this.authRepository.addUser(user);
-        //TO DO: emit user registered event with the rest of the payload
+        try {
+            const userData = {
+                username: user.username,
+                firstName: userPayload.firstName,
+                lastName: userPayload.lastName,
+                address: userPayload.address
+            }
+            this.eventQueue.execute(userData, 'user-registered');
+        } catch (err) {
+            console.error(err);
+            throw new InternalServerError('Failed to emit user-registered event');
+        }
     }
 
     public async updateUsername(username: string, newUsername: string) {
@@ -73,7 +89,12 @@ export class AuthService {
             throw new BadRequestError('Username already taken');
         }
         await this.authRepository.updateUsername(username, newUsername);
-        //TO DO: emit event with new username
+        try {
+            this.eventQueue.execute({oldUsername: username, newUsername}, 'username-updated');
+        } catch (err) {
+            console.error(err);
+            throw new InternalServerError('Failed to emit username-updated event');
+        }
     }
 
     public async updatePassword(username: string, newPassword: string) {
