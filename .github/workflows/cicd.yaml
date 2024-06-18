@@ -61,9 +61,9 @@ jobs:
 
     - name: Run unit tests
       run: |
-        docker run
-        -v $(mktemp -d):/app/dist
-        -v ./src:/app/src
+        docker run \
+        -v $(mktemp -d):/app/dist \
+        -v ./src:/app/src \
         $IMAGE_NAME:latest npm run test
         
   integration-tests:
