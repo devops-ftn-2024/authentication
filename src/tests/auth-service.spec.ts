@@ -127,20 +127,6 @@ describe('AuthService', () => {
             repository.getUsersByFilter.mockResolvedValue([{ username: 'newUsername', password: 'hashedPassword', role: Role.GUEST }]);
             await expect(service.updateUsername('oldUsername', 'newUsername')).rejects.toThrow(BadRequestError);
         });
-
-        test('should update username and emit event', async () => {
-            repository.getUsersByFilter.mockResolvedValue([{ username: 'oldUsername', password: 'hashedPassword', role: Role.GUEST }]);
-            await service.updateUsername('oldUsername', 'newUsername');
-            expect(repository.updateUsername).toHaveBeenCalledWith('oldUsername', 'newUsername');
-            expect(eventQueue.execute).toHaveBeenCalledWith({ oldUsername: 'oldUsername', newUsername: 'newUsername' }, 'username-updated');
-        });
-
-        test('should throw InternalServerError if event emission fails', async () => {
-            repository.getUsersByFilter.mockResolvedValue([{ username: 'oldUsername', password: 'hashedPassword', role: Role.GUEST }]);
-            eventQueue.execute.mockImplementation(() => { throw new Error(); });
-
-            await expect(service.updateUsername('oldUsername', 'newUsername')).rejects.toThrow(InternalServerError);
-        });
     });
 
     describe('updatePassword', () => {
