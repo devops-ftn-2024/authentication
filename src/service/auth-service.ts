@@ -90,7 +90,7 @@ export class AuthService {
         }
         await this.authRepository.updateUsername(username, newUsername);
         try {
-            this.eventQueue.execute({oldUsername: username, newUsername}, 'username-updated');
+            this.eventQueue.executeFanOut({oldUsername: username, newUsername}, 'username-updated');
         } catch (err) {
             console.error(err);
             throw new InternalServerError('Failed to emit username-updated event');
