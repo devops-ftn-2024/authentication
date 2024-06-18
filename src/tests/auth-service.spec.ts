@@ -8,7 +8,6 @@ import { EventQueue } from "../gateway/event-queue";
 import { jest, describe, beforeEach, test, expect } from '@jest/globals';
 
 jest.mock('../repository/auth-repository');
-jest.mock('../util/validation');
 jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
 jest.mock('../gateway/event-queue');
@@ -63,7 +62,7 @@ describe('AuthService', () => {
 
         test('should return user info if token is valid', async () => {
             (jwt.verify as jest.Mock).mockReturnValue({ username: 'username' });
-            repository.getUser.mockResolvedValue({ username: 'username', role: Role.GUEST });
+            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword', role: Role.GUEST });
 
             const result = await service.validateToken('validToken');
             expect(result).toEqual({ username: 'username', role: Role.GUEST });
