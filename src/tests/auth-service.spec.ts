@@ -1,7 +1,7 @@
 import { AuthRepository } from "../repository/auth-repository";
 import { AuthService } from "../service/auth-service";
 import { BadRequestError, InternalServerError, UnauthorizedError } from "../types/errors";
-import { UserPayload } from "../types/user";
+import { UserPayload, User, Role } from "../types/user";
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { EventQueue } from "../gateway/event-queue";
@@ -31,20 +31,20 @@ describe('AuthService', () => {
             repository.getUser.mockResolvedValue(null);
             await expect(service.login('username', 'password')).rejects.toThrow(UnauthorizedError);
 
-            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword' });
+            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword', role: Role.GUEST });
             (bcrypt.compare as jest.Mock).mockResolvedValue(false);
             await expect(service.login('username', 'password')).rejects.toThrow(UnauthorizedError);
         });
 
         test('should throw InternalServerError if secret key is not found', async () => {
-            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword' });
+            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword', role: Role.GUEST });
             (bcrypt.compare as jest.Mock).mockResolvedValue(true);
             delete process.env.SECRET_KEY;
             await expect(service.login('username', 'password')).rejects.toThrow(InternalServerError);
         });
 
         test('should return a token if login is successful', async () => {
-            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword' });
+            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword', role: Role.GUEST });
             (bcrypt.compare as jest.Mock).mockResolvedValue(true);
             process.env.SECRET_KEY = 'secret';
             (jwt.sign as jest.Mock).mockReturnValue('token');
@@ -63,37 +63,44 @@ describe('AuthService', () => {
 
         test('should return user info if token is valid', async () => {
             (jwt.verify as jest.Mock).mockReturnValue({ username: 'username' });
-            repository.getUser.mockResolvedValue({ username: 'username', role: 'role' });
+            repository.getUser.mockResolvedValue({ username: 'username', role: Role.GUEST });
 
             const result = await service.validateToken('validToken');
-            expect(result).toEqual({ username: 'username', role: 'role' });
+            expect(result).toEqual({ username: 'username', role: Role.GUEST });
         });
     });
 
     describe('register', () => {
         test('should throw BadRequestError if user already exists', async () => {
-            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword' });
+            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword', role: Role.GUEST });
 
-            await expect(service.register({ username: 'username', password: 'password' } as UserPayload)).rejects.toThrow(BadRequestError);
+            await expect(service.register({ username: 'username', password: 'password', role: Role.GUEST, firstName: 'firstName', lastName: 'lastName', address: 'address' } as UserPayload)).rejects.toThrow(BadRequestError);
         });
 
         test('should hash password and call addUser', async () => {
             repository.getUser.mockResolvedValue(null);
             (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
-            const userPayload = { username: 'username', password: 'password', role: 'role' } as unknown as UserPayload;
+            const userPayload: UserPayload = { 
+                username: 'username', 
+                password: 'password', 
+                role: Role.GUEST, 
+                firstName: 'firstName', 
+                lastName: 'lastName', 
+                address: 'address' 
+            };
 
             await service.register(userPayload);
             expect(repository.addUser).toHaveBeenCalledWith(expect.objectContaining({
                 username: 'username',
                 password: 'hashedPassword',
-                role: 'role',
+                role: Role.GUEST
             }));
         });
 
         test('should emit user-registered event', async () => {
             repository.getUser.mockResolvedValue(null);
             (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
-            const userPayload = { username: 'username', password: 'password', role: 'role', firstName: 'firstName', lastName: 'lastName', address: 'address' } as unknown as UserPayload;
+            const userPayload = { username: 'username', password: 'password', role: Role.GUEST, firstName: 'firstName', lastName: 'lastName', address: 'address' } as UserPayload;
 
             await service.register(userPayload);
             expect(eventQueue.execute).toHaveBeenCalledWith(expect.objectContaining({
@@ -109,7 +116,7 @@ describe('AuthService', () => {
             (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
             eventQueue.execute.mockImplementation(() => { throw new Error(); });
 
-            await expect(service.register({ username: 'username', password: 'password', role: 'role' } as unknown as UserPayload)).rejects.toThrow(InternalServerError);
+            await expect(service.register({ username: 'username', password: 'password', role: Role.GUEST, firstName: 'firstName', lastName: 'lastName', address: 'address' } as UserPayload)).rejects.toThrow(InternalServerError);
         });
     });
 
@@ -118,19 +125,19 @@ describe('AuthService', () => {
             repository.getUsersByFilter.mockResolvedValue([]);
             await expect(service.updateUsername('oldUsername', 'newUsername')).rejects.toThrow(BadRequestError);
 
-            repository.getUsersByFilter.mockResolvedValue([{ username: 'newUsername', password: 'hashedPassword' }]);
+            repository.getUsersByFilter.mockResolvedValue([{ username: 'newUsername', password: 'hashedPassword', role: Role.GUEST }]);
             await expect(service.updateUsername('oldUsername', 'newUsername')).rejects.toThrow(BadRequestError);
         });
 
         test('should update username and emit event', async () => {
-            repository.getUsersByFilter.mockResolvedValue([{ username: 'oldUsername', password: 'hashedPassword' }]);
+            repository.getUsersByFilter.mockResolvedValue([{ username: 'oldUsername', password: 'hashedPassword', role: Role.GUEST }]);
             await service.updateUsername('oldUsername', 'newUsername');
             expect(repository.updateUsername).toHaveBeenCalledWith('oldUsername', 'newUsername');
             expect(eventQueue.execute).toHaveBeenCalledWith({ oldUsername: 'oldUsername', newUsername: 'newUsername' }, 'username-updated');
         });
 
         test('should throw InternalServerError if event emission fails', async () => {
-            repository.getUsersByFilter.mockResolvedValue([{ username: 'oldUsername', password: 'hashedPassword' }]);
+            repository.getUsersByFilter.mockResolvedValue([{ username: 'oldUsername', password: 'hashedPassword', role: Role.GUEST }]);
             eventQueue.execute.mockImplementation(() => { throw new Error(); });
 
             await expect(service.updateUsername('oldUsername', 'newUsername')).rejects.toThrow(InternalServerError);
@@ -142,13 +149,13 @@ describe('AuthService', () => {
             repository.getUser.mockResolvedValue(null);
             await expect(service.updatePassword('username', 'newPassword')).rejects.toThrow(BadRequestError);
 
-            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword' });
+            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword', role: Role.GUEST });
             (bcrypt.compare as jest.Mock).mockResolvedValue(true);
             await expect(service.updatePassword('username', 'newPassword')).rejects.toThrow(BadRequestError);
         });
 
         test('should hash new password and call updatePassword', async () => {
-            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword' });
+            repository.getUser.mockResolvedValue({ username: 'username', password: 'hashedPassword', role: Role.GUEST });
             (bcrypt.compare as jest.Mock).mockResolvedValue(false);
             (bcrypt.hash as jest.Mock).mockResolvedValue('newHashedPassword');
 
