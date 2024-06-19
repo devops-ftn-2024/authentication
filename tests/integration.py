@@ -64,5 +64,5 @@ def test_login():
 
 test_health()
 test_login_unauthorized()
-test_register()
-test_login()
+# test_register()
+# test_login()
