@@ -91,6 +91,10 @@ export class AuthService {
 
     public async updateUsername(username: string, newUsername: string) {
         Logger.log(`Updating username from ${username} to ${newUsername}`);
+        if (!newUsername) {
+            Logger.error(`BadRequestError: New username cannot be empty`);
+            throw new BadRequestError('New username cannot be empty');
+        }
         const filter = { username: { $in: [username, newUsername] }}
         const users: User[] = await this.authRepository.getUsersByFilter(filter);
         const oldUser = users.find(user => user.username === username);
