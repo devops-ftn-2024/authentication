@@ -12,7 +12,7 @@ export class AuthService {
     private eventQueue;
     constructor() { 
         this.authRepository = new AuthRepository();
-        this.eventQueue = new EventQueue();
+        this.eventQueue = new EventQueue(this);
     }
 
     async login(username: string, password: string): Promise<string> {
@@ -135,5 +135,11 @@ export class AuthService {
         }
         await this.authRepository.updatePassword(username, hashPassword);
         Logger.log(`Password updated successfully`);
+    }
+
+    public async deleteUser(username: string) {
+        Logger.log(`Deleting user ${username}`);
+        await this.authRepository.deleteUser(username);
+        Logger.log(`User deleted successfully`);
     }
 }
