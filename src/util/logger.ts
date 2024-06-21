@@ -36,7 +36,6 @@ export class Logger {
         }
         
         const log = `${new Date().toISOString()} [${Level[level]}] ${message}`
-        console.log(`writing log ${this.filePath}`)
         fs.appendFileSync(this.filePath, log + '\n', 'utf8');
     }
 }
