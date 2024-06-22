@@ -54,5 +54,10 @@ export class AuthRepository {
         await this.client.close();
         return users;
     }
+
+    public async deleteUser(username: string) {
+        await this.client.connect();
+        await this.collection.deleteOne({ username });
+    }
    
 }

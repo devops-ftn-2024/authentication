@@ -1,20 +1,31 @@
-FROM node:22-alpine
+FROM node:22-alpine AS build
 
-RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
+WORKDIR /app
 
-WORKDIR /home/node/app
-
-COPY package*.json ./
-
-RUN apk update && apk add curl
-
-USER node
+COPY package*.json .
 
 RUN npm ci
 
-COPY --chown=node:node . .
+COPY . .
 
-RUN npx tsc
+RUN npm run build
+
+FROM node:22-alpine AS runner
+
+RUN apk update && apk add curl
+
+WORKDIR /app
+
+RUN chown -R node:node /app
+
+USER node
+
+COPY package*.json .
+
+RUN npm ci
+
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --chown=node:node .babelrc .
 
 EXPOSE 3001
 
